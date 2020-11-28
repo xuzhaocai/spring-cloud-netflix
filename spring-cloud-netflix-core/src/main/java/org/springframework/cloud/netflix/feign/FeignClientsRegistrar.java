@@ -84,25 +84,35 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 	public void setBeanClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
-
+	//注册bean
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+
+
+        // 注册默认的配置
 		registerDefaultConfiguration(metadata, registry);
+
+		// 注册fegin客户端
 		registerFeignClients(metadata, registry);
 	}
 
 	private void registerDefaultConfiguration(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+
+
+		// 这个就是获取 @EnableFeignClients 里面的属性值
 		Map<String, Object> defaultAttrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
 
+
+		// 判断里面defaultConfiguration 属性值的话 ，默认的话有key的
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
 			String name;
 			if (metadata.hasEnclosingClass()) {
 				name = "default." + metadata.getEnclosingClassName();
 			}
-			else {
+			else {/// 拼接name  default.com.xzc.eureka.ServiceBApplication
 				name = "default." + metadata.getClassName();
 			}
 			registerClientConfiguration(registry, name,
@@ -112,25 +122,44 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 
 	public void registerFeignClients(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+
+
+	    // 获取一个scanner ，就是个扫描器
 		ClassPathScanningCandidateComponentProvider scanner = getScanner();
 		scanner.setResourceLoader(this.resourceLoader);
 
 		Set<String> basePackages;
-
+        // 获取@EnableFeignClients 注解上的属性
 		Map<String, Object> attrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName());
+
+
+
+		// 创建一个过滤器，然后能够 过滤注解FeignClient
 		AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(
 				FeignClient.class);
+
+
+
 		final Class<?>[] clients = attrs == null ? null
 				: (Class<?>[]) attrs.get("clients");
+
+		// 默认情况下是null ，因为我们一般什么也不写
 		if (clients == null || clients.length == 0) {
+
+		    // 添加那个注解过滤器
 			scanner.addIncludeFilter(annotationTypeFilter);
+
+
+			// 获取Package
 			basePackages = getBasePackages(metadata);
 		}
 		else {
 			final Set<String> clientClasses = new HashSet<>();
 			basePackages = new HashSet<>();
 			for (Class<?> clazz : clients) {
+
+			    /// 添加package
 				basePackages.add(ClassUtils.getPackageName(clazz));
 				clientClasses.add(clazz.getCanonicalName());
 			}
@@ -276,7 +305,14 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		return path;
 	}
 
+
+    /**
+     * 获取扫描器
+     * @return
+     */
 	protected ClassPathScanningCandidateComponentProvider getScanner() {
+
+	    // 不使用默认的filter
 		return new ClassPathScanningCandidateComponentProvider(false, this.environment) {
 
 			@Override
@@ -311,6 +347,11 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		};
 	}
 
+    /**
+     * 获取要扫描的包
+     * @param importingClassMetadata
+     * @return
+     */
 	protected Set<String> getBasePackages(AnnotationMetadata importingClassMetadata) {
 		Map<String, Object> attributes = importingClassMetadata
 				.getAnnotationAttributes(EnableFeignClients.class.getCanonicalName());
@@ -367,13 +408,24 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 				+ FeignClient.class.getSimpleName());
 	}
 
+    /**
+     *
+     * 注册客户端congfiguration
+     *
+     * @param registry
+     * @param name
+     * @param configuration
+     */
 	private void registerClientConfiguration(BeanDefinitionRegistry registry, Object name,
 			Object configuration) {
+
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder
 				.genericBeanDefinition(FeignClientSpecification.class);
 		builder.addConstructorArgValue(name);
 		builder.addConstructorArgValue(configuration);
 		registry.registerBeanDefinition(
+
+		        // 这里又拼接上了一个  .FeignClientSpecification
 				name + "." + FeignClientSpecification.class.getSimpleName(),
 				builder.getBeanDefinition());
 	}
