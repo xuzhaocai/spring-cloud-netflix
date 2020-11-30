@@ -32,6 +32,9 @@ import java.lang.annotation.Target;
  *
  * @author Dave Syer
  * @author Spencer Gibb
+ *
+ *
+ * 启动服务注册注解
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

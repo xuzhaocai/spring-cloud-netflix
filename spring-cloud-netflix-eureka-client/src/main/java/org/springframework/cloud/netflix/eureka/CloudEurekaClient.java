@@ -38,6 +38,7 @@ import com.netflix.discovery.shared.transport.EurekaHttpClient;
  * Subclass of {@link DiscoveryClient} that sends a {@link HeartbeatEvent} when
  * {@link CloudEurekaClient#onCacheRefreshed()} is called.
  * @author Spencer Gibb
+ *  继承DiscoveryClient
  */
 public class CloudEurekaClient extends DiscoveryClient {
 	private static final Log log = LogFactory.getLog(CloudEurekaClient.class);

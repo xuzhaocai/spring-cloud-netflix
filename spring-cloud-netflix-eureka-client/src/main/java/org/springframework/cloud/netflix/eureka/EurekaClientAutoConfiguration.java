@@ -231,6 +231,8 @@ public class EurekaClientAutoConfiguration {
 		@Bean(destroyMethod = "shutdown")
 		@ConditionalOnMissingBean(value = EurekaClient.class, search = SearchStrategy.CURRENT)
 		public EurekaClient eurekaClient(ApplicationInfoManager manager, EurekaClientConfig config) {
+
+			// 创建eureka 客户端
 			return new CloudEurekaClient(manager, config, this.optionalArgs,
 					this.context);
 		}
@@ -239,6 +241,8 @@ public class EurekaClientAutoConfiguration {
 		@ConditionalOnMissingBean(value = ApplicationInfoManager.class, search = SearchStrategy.CURRENT)
 		public ApplicationInfoManager eurekaApplicationInfoManager(
 				EurekaInstanceConfig config) {
+
+			//创建instanceInfo
 			InstanceInfo instanceInfo = new InstanceInfoFactory().create(config);
 			return new ApplicationInfoManager(config, instanceInfo);
 		}

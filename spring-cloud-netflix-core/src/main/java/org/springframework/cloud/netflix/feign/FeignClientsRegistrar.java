@@ -174,17 +174,29 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 					new AllTypeFilter(Arrays.asList(filter, annotationTypeFilter)));
 		}
 
+
+
 		for (String basePackage : basePackages) {
+
+			///获取这个包下面的BeanDefinition，其实就是走的自己实现的那个扫描器，扫出@FeignClient
 			Set<BeanDefinition> candidateComponents = scanner
 					.findCandidateComponents(basePackage);
+
+			//遍历这一坨
 			for (BeanDefinition candidateComponent : candidateComponents) {
+
+
 				if (candidateComponent instanceof AnnotatedBeanDefinition) {
 					// verify annotated class is an interface
 					AnnotatedBeanDefinition beanDefinition = (AnnotatedBeanDefinition) candidateComponent;
+
+					// 获取元数据
 					AnnotationMetadata annotationMetadata = beanDefinition.getMetadata();
+
+					// 断言是不是接口  这个 @FeignClient 注解必须 标注接口
 					Assert.isTrue(annotationMetadata.isInterface(),
 							"@FeignClient can only be specified on an interface");
-
+					// 这个就是获取注解上面的 属性值
 					Map<String, Object> attributes = annotationMetadata
 							.getAnnotationAttributes(
 									FeignClient.class.getCanonicalName());
@@ -192,19 +204,30 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 					String name = getClientName(attributes);
 					registerClientConfiguration(registry, name,
 							attributes.get("configuration"));
-
+					// 进行注册
 					registerFeignClient(registry, annotationMetadata, attributes);
 				}
 			}
 		}
 	}
-
+	// 进行注册
 	private void registerFeignClient(BeanDefinitionRegistry registry,
 			AnnotationMetadata annotationMetadata, Map<String, Object> attributes) {
+
+
+		// 获取className
 		String className = annotationMetadata.getClassName();
+
+
+		//TODO  这个比较重要
+		///BeanDefinition 构造器
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder
 				.genericBeanDefinition(FeignClientFactoryBean.class);
+
+		// 校验
 		validate(attributes);
+
+
 		definition.addPropertyValue("url", getUrl(attributes));
 		definition.addPropertyValue("path", getPath(attributes));
 		String name = getName(attributes);
@@ -216,6 +239,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
 		String alias = name + "FeignClient";
+		//获取这个beanDefinition
 		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
 
 		boolean primary = (Boolean)attributes.get("primary"); // has a default, won't be null
@@ -229,6 +253,8 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 
 		BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, className,
 				new String[] { alias });
+
+		// 注册到spring 中去
 		BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
 	}
 
@@ -314,15 +340,19 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
 
 	    // 不使用默认的filter
 		return new ClassPathScanningCandidateComponentProvider(false, this.environment) {
-
+			// 这个就是扫描
 			@Override
 			protected boolean isCandidateComponent(
 					AnnotatedBeanDefinition beanDefinition) {
 				if (beanDefinition.getMetadata().isIndependent()) {
 					// TODO until SPR-11711 will be resolved
+
+					/// 是接口
 					if (beanDefinition.getMetadata().isInterface()
 							&& beanDefinition.getMetadata()
 									.getInterfaceNames().length == 1
+
+
 							&& Annotation.class.getName().equals(beanDefinition
 									.getMetadata().getInterfaceNames()[0])) {
 						try {
@@ -353,25 +383,36 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar,
      * @return
      */
 	protected Set<String> getBasePackages(AnnotationMetadata importingClassMetadata) {
+
+		// 获取属性
 		Map<String, Object> attributes = importingClassMetadata
 				.getAnnotationAttributes(EnableFeignClients.class.getCanonicalName());
 
 		Set<String> basePackages = new HashSet<>();
+
+		///  @EnableFeignClients({"com.xzc.eureka","com.xzc.eureka.service"})
+		// 如果有value属性的话， 看这个样子value是可以数组了
 		for (String pkg : (String[]) attributes.get("value")) {
 			if (StringUtils.hasText(pkg)) {
 				basePackages.add(pkg);
 			}
 		}
+
+		//获取base package 的值value值们
 		for (String pkg : (String[]) attributes.get("basePackages")) {
 			if (StringUtils.hasText(pkg)) {
 				basePackages.add(pkg);
 			}
 		}
+
+		///获取basePackageClasses value 值们
 		for (Class<?> clazz : (Class[]) attributes.get("basePackageClasses")) {
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
 
 		if (basePackages.isEmpty()) {
+
+			// 这个就是获取  @EnableFeignClients 这个
 			basePackages.add(
 					ClassUtils.getPackageName(importingClassMetadata.getClassName()));
 		}

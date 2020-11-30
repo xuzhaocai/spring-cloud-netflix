@@ -26,6 +26,7 @@ public class PropertiesFactory {
 
 	private Map<Class, String> classToProperty = new HashMap<>();
 
+	// 初始化的设置一堆
 	public PropertiesFactory() {
 		classToProperty.put(ILoadBalancer.class, "NFLoadBalancerClassName");
 		classToProperty.put(IPing.class, "NFLoadBalancerPingClassName");

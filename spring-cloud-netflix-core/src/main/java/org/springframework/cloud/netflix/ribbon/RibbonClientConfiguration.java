@@ -81,19 +81,30 @@ public class RibbonClientConfiguration {
 	@Autowired
 	private PropertiesFactory propertiesFactory;
 
+
+	/**
+	 * 创建 ribbonclient 配置
+	 * @return
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public IClientConfig ribbonClientConfig() {
 		DefaultClientConfigImpl config = new DefaultClientConfigImpl();
 		config.loadProperties(this.name);
+
+		/// 默认连接超时
 		config.set(CommonClientConfigKey.ConnectTimeout, DEFAULT_CONNECT_TIMEOUT);
+
+		// 默认是读取超时
 		config.set(CommonClientConfigKey.ReadTimeout, DEFAULT_READ_TIMEOUT);
 		return config;
 	}
-
+	// IRule
 	@Bean
 	@ConditionalOnMissingBean
 	public IRule ribbonRule(IClientConfig config) {
+
+		///这个就是看看有没有这个ribbon.client.name
 		if (this.propertiesFactory.isSet(IRule.class, name)) {
 			return this.propertiesFactory.get(IRule.class, config, name);
 		}
@@ -101,7 +112,7 @@ public class RibbonClientConfiguration {
 		rule.initWithNiwsConfig(config);
 		return rule;
 	}
-
+	// IPing
 	@Bean
 	@ConditionalOnMissingBean
 	public IPing ribbonPing(IClientConfig config) {
@@ -111,6 +122,11 @@ public class RibbonClientConfiguration {
 		return new DummyPing();
 	}
 
+	/**
+	 * serverList
+	 * @param config
+	 * @return
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	@SuppressWarnings("unchecked")
@@ -123,6 +139,12 @@ public class RibbonClientConfiguration {
 		return serverList;
 	}
 
+
+	/**
+	 * serverList 更新器
+	 * @param config
+	 * @return
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public ServerListUpdater ribbonServerListUpdater(IClientConfig config) {
@@ -137,6 +159,8 @@ public class RibbonClientConfiguration {
 		if (this.propertiesFactory.isSet(ILoadBalancer.class, name)) {
 			return this.propertiesFactory.get(ILoadBalancer.class, config, name);
 		}
+
+		///创建这个ZoneAwareLoadBalancer
 		return new ZoneAwareLoadBalancer<>(config, rule, ping, serverList,
 				serverListFilter, serverListUpdater);
 	}

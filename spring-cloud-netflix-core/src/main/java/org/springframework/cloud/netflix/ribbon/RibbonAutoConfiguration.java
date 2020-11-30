@@ -59,9 +59,15 @@ import com.netflix.ribbon.Ribbon;
  * @author Biju Kunjummen
  */
 @Configuration
+
+/// 有这几个类
 @ConditionalOnClass({ IClient.class, RestTemplate.class, AsyncRestTemplate.class, Ribbon.class})
 @RibbonClients
+
+// 在这个之后
 @AutoConfigureAfter(name = "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration")
+
+// 在这两个之前
 @AutoConfigureBefore({LoadBalancerAutoConfiguration.class, AsyncLoadBalancerAutoConfiguration.class})
 @EnableConfigurationProperties({RibbonEagerLoadProperties.class, ServerIntrospectorProperties.class})
 public class RibbonAutoConfiguration {
@@ -84,6 +90,11 @@ public class RibbonAutoConfiguration {
 		return factory;
 	}
 
+
+	/**
+	 * 实例化ribbonBalancerClient
+	 * @return
+	 */
 	@Bean
 	@ConditionalOnMissingBean(LoadBalancerClient.class)
 	public LoadBalancerClient loadBalancerClient() {

@@ -84,6 +84,8 @@ public class SpringClientFactory extends NamedContextFactory<RibbonClientSpecifi
 		C result = null;
 		
 		try {
+
+			// 反射创建
 			Constructor<C> constructor = clazz.getConstructor(IClientConfig.class);
 			result = constructor.newInstance(config);
 		} catch (Throwable e) {
@@ -104,14 +106,17 @@ public class SpringClientFactory extends NamedContextFactory<RibbonClientSpecifi
 		
 		return result;
 	}
-
+	// name 是你那个服务名
 	@Override
 	public <C> C getInstance(String name, Class<C> type) {
 		C instance = super.getInstance(name, type);
 		if (instance != null) {
 			return instance;
 		}
+
+		// 获取IConfig
 		IClientConfig config = getInstance(name, IClientConfig.class);
+		// 创建
 		return instantiateWithConfig(getContext(name), type, config);
 	}
 

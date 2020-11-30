@@ -34,6 +34,11 @@ import com.netflix.loadbalancer.Server;
  * @author Spencer Gibb
  * @author Dave Syer
  * @author Ryan Baxter
+ *
+ *
+ *
+ * RibbonLoadBalancerClient
+ *
  */
 public class RibbonLoadBalancerClient implements LoadBalancerClient {
 
@@ -43,17 +48,35 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 		this.clientFactory = clientFactory;
 	}
 
+
+	/**
+	 * 重组 uri方法
+	 * @param instance
+	 * @param original a URI with the host as a logical service name
+	 * @return
+	 */
 	@Override
 	public URI reconstructURI(ServiceInstance instance, URI original) {
 		Assert.notNull(instance, "instance can not be null");
+		// 获取serviceId
 		String serviceId = instance.getServiceId();
+
+		// 获取context
 		RibbonLoadBalancerContext context = this.clientFactory
 				.getLoadBalancerContext(serviceId);
 		Server server = new Server(instance.getHost(), instance.getPort());
+
+		// 获取client配置
 		IClientConfig clientConfig = clientFactory.getClientConfig(serviceId);
 		ServerIntrospector serverIntrospector = serverIntrospector(serviceId);
+
+
+
+		// 更新https
 		URI uri = RibbonUtils.updateToHttpsIfNeeded(original, clientConfig,
 				serverIntrospector, server);
+
+		// 拼接uri
 		return context.reconstructURIWithServer(server, uri);
 	}
 
@@ -67,16 +90,35 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 				serverIntrospector(serviceId).getMetadata(server));
 	}
 
+	/**
+	 *
+	 * 执行
+	 * @param serviceId the service id to look up the LoadBalancer  服务id   ServiceA
+	 * @param request allows implementations to execute pre and post actions such as
+	 * incrementing metrics
+	 * @param <T>
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	public <T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException {
+
+
+		// 获取ribbon 的loadBalancer
 		ILoadBalancer loadBalancer = getLoadBalancer(serviceId);
+
+		// 然后使用loadBalancer 选出一个server
 		Server server = getServer(loadBalancer);
 		if (server == null) {
 			throw new IllegalStateException("No instances available for " + serviceId);
 		}
+
+		// 封装ribbonServer
 		RibbonServer ribbonServer = new RibbonServer(serviceId, server, isSecure(server,
 				serviceId), serverIntrospector(serviceId).getMetadata(server));
 
+
+		//执行
 		return execute(serviceId, ribbonServer, request);
 	}
 
@@ -84,18 +126,26 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	public <T> T execute(String serviceId, ServiceInstance serviceInstance, LoadBalancerRequest<T> request) throws IOException {
 		Server server = null;
 		if(serviceInstance instanceof RibbonServer) {
+
+			// 获取server
 			server = ((RibbonServer)serviceInstance).getServer();
 		}
 		if (server == null) {
 			throw new IllegalStateException("No instances available for " + serviceId);
 		}
-
+		// 获取context
 		RibbonLoadBalancerContext context = this.clientFactory
 				.getLoadBalancerContext(serviceId);
+
+
 		RibbonStatsRecorder statsRecorder = new RibbonStatsRecorder(context, server);
 
 		try {
+
+			// 继续执行
 			T returnVal = request.apply(serviceInstance);
+
+			//记录状态的
 			statsRecorder.recordStats(returnVal);
 			return returnVal;
 		}
@@ -129,15 +179,24 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	protected Server getServer(String serviceId) {
 		return getServer(getLoadBalancer(serviceId));
 	}
-
+	// 使用loadbalancer 选出一个server
 	protected Server getServer(ILoadBalancer loadBalancer) {
 		if (loadBalancer == null) {
 			return null;
 		}
+
+		// 调用choose方法
 		return loadBalancer.chooseServer("default"); // TODO: better handling of key
 	}
 
+	/**
+	 * 根据服务id获取 loadbalaner
+	 * @param serviceId
+	 * @return
+	 */
 	protected ILoadBalancer getLoadBalancer(String serviceId) {
+
+		// SpringClientFactory
 		return this.clientFactory.getLoadBalancer(serviceId);
 	}
 
@@ -153,8 +212,8 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 
 		public RibbonServer(String serviceId, Server server, boolean secure,
 				Map<String, String> metadata) {
-			this.serviceId = serviceId;
-			this.server = server;
+			this.serviceId = serviceId;//服务id
+			this.server = server;  // server信息
 			this.secure = secure;
 			this.metadata = metadata;
 		}

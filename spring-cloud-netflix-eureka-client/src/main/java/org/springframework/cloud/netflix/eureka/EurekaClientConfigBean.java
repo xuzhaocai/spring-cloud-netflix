@@ -37,7 +37,12 @@ import static org.springframework.cloud.netflix.eureka.EurekaConstants.DEFAULT_P
 /**
  * @author Dave Syer
  * @author Gregor Zurowski
+ *
+ * springcloud eureka 配置类， 实现  EurekaClientConfig
  */
+
+
+/// 专门读取配置文件中的eureka.client 类的
 @ConfigurationProperties(EurekaClientConfigBean.PREFIX)
 public class EurekaClientConfigBean implements EurekaClientConfig {
 
@@ -64,12 +69,16 @@ public class EurekaClientConfigBean implements EurekaClientConfig {
 	/**
 	 * Indicates how often(in seconds) to fetch the registry information from the eureka
 	 * server.
+	 *
+	 * 多长时间拉取一次注册表
 	 */
 	private int registryFetchIntervalSeconds = 30;
 
 	/**
 	 * Indicates how often(in seconds) to replicate instance changes to be replicated to
 	 * the eureka server.
+	 *
+	 * 就是服务注册（服务续约）时间间隔
 	 */
 	private int instanceInfoReplicationIntervalSeconds = 30;
 
@@ -266,7 +275,11 @@ public class EurekaClientConfigBean implements EurekaClientConfig {
 	 *
 	 * In some cases, you do not want your instances to be discovered whereas you just
 	 * want do discover other instances.
+	 *
+	 * 向eureka server上注册
 	 */
+
+
 	private boolean registerWithEureka = true;
 
 	/**
@@ -338,6 +351,8 @@ public class EurekaClientConfigBean implements EurekaClientConfig {
 	/**
 	 * Indicates whether this client should fetch eureka registry information from eureka
 	 * server.
+	 *
+	 * 拉取注册表
 	 */
 	private boolean fetchRegistry = true;
 
